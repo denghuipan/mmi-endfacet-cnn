@@ -1,0 +1,28 @@
+# MMI End-facet CNN 自动训练依赖
+# 安装方式: pip install -r requirements.txt
+
+# 核心框架
+tensorflow>=2.13.0          # 深度学习框架
+numpy>=1.24.0               # 数值计算
+scipy>=1.10.0               # 科学计算（信号处理、优化）
+
+# 图像处理
+scikit-image>=0.20.0        # 图像处理（对比度拉伸等）
+matplotlib>=3.7.0           # 可视化
+seaborn>=0.12.0             # 统计可视化
+seaborn-image>=0.8.0        # 图像可视化
+
+# 数据处理
+h5py>=3.8.0                 # HDF5 文件读写
+pandas>=2.0.0               # 数据表格处理
+scikit-learn>=1.2.0         # 数据集划分等
+scipy>=1.10.0               # 峰值检测、高斯拟合、相关性分析
+
+# 并行计算
+joblib>=1.2.0               # 并行数据处理
+
+# 可选：GPU 监控
+# nvidia-ml-py3>=7.352.0    # NVIDIA GPU 监控（仅需调试时）
+
+# 可选：实验跟踪
+# wandb>=0.15.0             # Weights & Biases 实验跟踪

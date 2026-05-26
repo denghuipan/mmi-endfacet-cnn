@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# TensorFlow / Keras
+*.keras
+*.h5
+checkpoints/
+Resnet_training_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (too large for GitHub)
+*.h5
+*.hdf5
+*.npz
+*.npy
+!requirements.txt
+
+# Training artifacts
+training_history.npz
+*.png
