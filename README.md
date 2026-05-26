@@ -1,61 +1,61 @@
-# MMI End-facet CNN — 全自动训练 + 智能测试
+# MMI End-facet CNN — Auto-Training + Smart Testing
 
-从 MMI 端面显微图像预测 OSA 光谱的 ResNet CNN，支持 Colab 一键训练 + 自动测试报告。
+A ResNet CNN that predicts OSA spectra from MMI end-facet micrographs. One-click Colab training with automatic test reporting.
 
 ---
 
 ## Features
 
-- 🚀 **Colab 一键运行** — 4 个 cell，点「全部运行」即可
-- 🧠 **ResNet v2** — stride=1 首层 + SE 通道注意力 + Linear 输出
-- 📉 **组合损失** — MSE + Gradient Loss + SAM，直接优化光谱形状
-- 🧪 **智能测试引擎** — 自动识别 broad / single / dual / multi 四种光谱类型，生成对应报告
-- ⚙️ **Notebook 内配置路径** — 不用改 .py 文件
+- 🚀 **One-click Colab** — 4 cells, hit "Run All"
+- 🧠 **ResNet v2** — stride=1 first conv + SE channel attention + linear output
+- 📉 **Combined loss** — MSE + Gradient Loss + SAM, directly optimizes spectral shape
+- 🧪 **Smart testing engine** — auto-detects broad / single / dual / multi spectra, generates type-specific reports
+- ⚙️ **Notebook-level config** — set paths in a notebook cell; no need to edit .py files
 
 ---
 
 ## Quick Start (Colab)
 
-1. 打开 `train_colab.ipynb`，连接 Colab GPU
-2. 在 Cell 2 修改你的数据目录：
+1. Open `train_colab.ipynb` and connect to a Colab GPU
+2. Edit Cell 2 to point to your data directory:
 
 ```python
 os.environ['MMI_DS_DIR'] = "/content/drive/MyDrive/ucsc/MMI/8um"
 ```
 
-3. 确保 Google Drive 中有：
+3. Make sure your Google Drive contains:
 
 ```
 MyDrive/ucsc/MMI/8um/
-├── train.h5                # 训练数据 (augment/x, augment/y)
-└── single_test.h5          # 测试数据 (img, osa, wavelength, labels)
+├── train.h5                # training data (augment/x, augment/y)
+└── single_test.h5          # test data (img, osa, wavelength, labels)
 ```
 
-4. 点「全部运行」→ 训练 → 自动测试 → 报告
+4. Click "Run All" → training → auto-testing → report
 
 ---
 
 ## Project Structure
 
 ```
-├── train_colab.ipynb          # Colab 启动器（用户入口）
-├── colab_auto.py              # 全自动训练 + 测试脚本
-├── model.py                   # ResNet v2 模型定义 + 损失函数
-├── auto_train.py              # 本地训练脚本（命令行）
-├── config.py                  # 本地训练配置文件
-├── utils.py                   # HDF5 数据加载工具
-├── requirements.txt           # Python 依赖
+├── train_colab.ipynb              # Colab launcher (user entry point)
+├── colab_auto.py                  # Auto training + testing script
+├── model.py                       # ResNet v2 model + loss functions
+├── auto_train.py                  # Local training script (CLI)
+├── config.py                      # Local training config
+├── utils.py                       # HDF5 data loading utilities
+├── requirements.txt               # Python dependencies
 ├── .gitignore
-└── multi peak End-facet CNN.ipynb  # 原始实验 notebook
+└── multi peak End-facet CNN.ipynb # Original experiment notebook
 ```
 
 ---
 
 ## Configuration
 
-### Colab（推荐）
+### Colab (recommended)
 
-在 `train_colab.ipynb` 的 Cell 2 中设置环境变量：
+Set environment variables in Cell 2 of `train_colab.ipynb`:
 
 ```python
 os.environ['MMI_DS_DIR']   = "/content/drive/MyDrive/ucsc/MMI/8um"
@@ -63,15 +63,17 @@ os.environ['MMI_TRAIN_H5'] = "train.h5"
 os.environ['MMI_TEST_H5']  = "single_test.h5"
 ```
 
-### 本地训练
+All other settings (batch size, epochs, learning rate, loss weights) are in the `Config` class inside `colab_auto.py`.
 
-编辑 `config.py`，然后运行：
+### Local training
+
+Edit `config.py`, then run:
 
 ```bash
 python auto_train.py
 ```
 
-或带参数：
+Or with overrides:
 
 ```bash
 python auto_train.py --epochs 500 --batch-size 32
@@ -81,15 +83,15 @@ python auto_train.py --epochs 500 --batch-size 32
 
 ## Model Architecture (v2)
 
-| 组件 | 配置 |
-|------|------|
-| 输入 | (40, 400, 1) 灰度端面图像 |
-| 首层 Conv | 7×7, stride=1, 32ch |
-| 残差块 | 8 个 (64→64→128→128→256→256→512→512) |
-| SE 注意力 | 每层残差块后 |
-| 1×1 降维 | 128ch |
-| Dense | 256 → Dropout → 300 (linear) |
-| 参数量 | ~11M |
+| Component | Spec |
+|-----------|------|
+| Input | (40, 400, 1) grayscale end-facet image |
+| First Conv | 7×7, stride=1, 32 channels |
+| Residual blocks | 8 blocks (64→64→128→128→256→256→512→512) |
+| SE attention | After every residual block |
+| 1×1 bottleneck | 128 channels |
+| Dense head | 256 → Dropout → 300 (linear activation) |
+| Parameters | ~11M |
 
 ### Loss
 
@@ -97,10 +99,10 @@ python auto_train.py --epochs 500 --batch-size 32
 Loss = MSE + 0.1 × GradientLoss + 0.05 × SAM
 ```
 
-- **Gradient Loss**: 一阶差分，惩罚光谱形状差异
-- **SAM (Spectral Angle Mapper)**: 光谱角度相似度
+- **Gradient Loss**: first-order difference penalty — directly optimizes spectral shape, peak positions, and FWHM
+- **SAM (Spectral Angle Mapper)**: angular similarity between spectra, scale-invariant
 
-可在 Config 中调整权重（设为 0 关闭）：
+Weights are adjustable in Config (set to 0 to disable):
 
 ```python
 LOSS_W_GRAD = 0.1
@@ -111,37 +113,37 @@ LOSS_W_SAM  = 0.05
 
 ## Auto-Testing
 
-训练完成后自动运行。根据 ground truth 光谱的峰值数量判断类型：
+Runs automatically after training. Sample type is determined by the average number of peaks in ground-truth spectra:
 
-| 类型 | 平均峰值数 | 报告内容 |
-|------|-----------|---------|
+| Type | Avg peaks | Report contents |
+|------|----------|-----------------|
 | **broad** | < 0.5 | MSE / MAE / RMSE / Pearson r |
-| **single** | 0.5–1.5 | 峰位偏差 + FWHM + R² |
-| **dual** | 1.5–2.5 | 双峰间距 / 分辨率对比 |
-| **multi** | ≥ 2.5 | 各峰位置偏差表 |
+| **single** | 0.5–1.5 | Peak position error + FWHM + R² |
+| **dual** | 1.5–2.5 | Peak spacing / resolution comparison |
+| **multi** | ≥ 2.5 | Per-peak position error table |
 
-报告输出：
-- `test_report_{type}.txt` — 文本报告
-- `{type}_report.png` — True vs Pred 对比图
+Outputs (saved to the checkpoint directory):
+- `test_report_{type}.txt` — text report
+- `{type}_report.png` — True vs Pred overlay plots
 
 ---
 
 ## Data Format
 
-### 训练 H5
+### Training H5
 
 ```
-├── augment/x    (N, H, W)      图像
-└── augment/y    (N, L)         光谱
+├── augment/x    (N, H, W)      images
+└── augment/y    (N, L)         spectra
 ```
 
-### 测试 H5
+### Test H5
 
 ```
-├── img          (N, H, W)      图像
-├── osa          (N, L)         光谱
-├── wavelength   (L,)           波长数组
-└── labels       (N,)           样本标签
+├── img          (N, H, W)      images
+├── osa          (N, L)         spectra
+├── wavelength   (L,)           wavelength array
+└── labels       (N,)           sample labels (strings)
 ```
 
 ---
